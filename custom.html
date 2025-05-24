@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" 
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Custom Music Player - SKRIM.mp3</title>
   <link href="https://fonts.googleapis.com/css?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -74,16 +75,26 @@
       display: flex;
       justify-content: center;
       align-items: end;
-      height: 40px;
+      height: 36px;
       margin-top: 2rem;
-      gap: 0;
+      gap: 6px;
     }
-    #waveform {
-      display: block;
-      width: 100%;
-      height: 40px;
-      background: transparent;
-      border-radius: 8px;
+    .wave-bar {
+      display: inline-block;
+      width: 10px;
+      height: 30px;
+      background: linear-gradient(180deg, #00eaff, #0099ff);
+      border-radius: 4px;
+      animation: skrim-wave 1.2s infinite;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.6s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.8s; }
+    @keyframes skrim-wave {
+      0%, 100% { height: 16px; }
+      40% { height: 36px; }
+      80% { height: 24px; }
     }
     .custom-upload {
       margin-bottom: 1.2rem;
@@ -111,19 +122,24 @@
       <input id="volumeBar" class="skrim-volume" type="range" min="0" max="1" step="0.01" value="0.7">
     </div>
     <div class="skrim-wave">
-      <canvas id="waveform" width="330" height="40"></canvas>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
     </div>
     <div class="credit">Made with 💙 for your music</div>
   </div>
   <script>
-    // Player controls
     const audio = document.getElementById('audio');
     const playPause = document.getElementById('playPause');
     const seekBar = document.getElementById('seekBar');
     const volumeBar = document.getElementById('volumeBar');
     const fileInput = document.getElementById('fileInput');
     const trackTitle = document.getElementById('trackTitle');
+    let loaded = false;
     audio.volume = 0.7;
+
     fileInput.onchange = e => {
       const file = fileInput.files[0];
       if (file) {
@@ -136,10 +152,14 @@
         seekBar.value = 0;
       }
     };
+
     playPause.onclick = () => {
       if (!audio.src) return;
-      if (audio.paused) audio.play();
-      else audio.pause();
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
     };
     audio.onplay = () => playPause.textContent = "⏸ Pause";
     audio.onpause = () => playPause.textContent = "▶️ Play";
@@ -147,51 +167,14 @@
       seekBar.value = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
     };
     seekBar.oninput = e => {
-      if (audio.duration) audio.currentTime = (seekBar.value / 100) * audio.duration;
+      if (audio.duration) {
+        audio.currentTime = (seekBar.value / 100) * audio.duration;
+      }
     };
     volumeBar.oninput = e => {
       audio.volume = volumeBar.value;
     };
     audio.onended = () => playPause.textContent = "▶️ Play";
-
-    // Waveform visualization using Web Audio API
-    const canvas = document.getElementById('waveform');
-    const ctx = canvas.getContext('2d');
-    let audioCtx, analyser, src, dataArray, animationId;
-
-    function setupAudioContext() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioCtx.createAnalyser();
-        src = audioCtx.createMediaElementSource(audio);
-        src.connect(analyser);
-        analyser.connect(audioCtx.destination);
-        analyser.fftSize = 128;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
-      }
-    }
-
-    function draw() {
-      analyser.getByteFrequencyData(dataArray);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const barWidth = (canvas.width / dataArray.length) * 1.7;
-      let x = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        let barHeight = dataArray[i] / 1.5;
-        ctx.fillStyle = "#00eaff";
-        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-        x += barWidth + 1;
-      }
-      animationId = requestAnimationFrame(draw);
-    }
-
-    audio.addEventListener('play', () => {
-      setupAudioContext();
-      audioCtx.resume();
-      draw();
-    });
-    audio.addEventListener('pause', () => cancelAnimationFrame(animationId));
-    audio.addEventListener('ended', () => cancelAnimationFrame(animationId));
   </script>
 </body>
 </html>
