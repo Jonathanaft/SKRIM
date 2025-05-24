@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>SKRIM.mp3 Fancy Music Player</title>
+  <link href="https://fonts.googleapis.com/css?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    .skrim-player {
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+      width: 370px;
+      padding: 2rem 2rem 1.5rem 2rem;
+      border-radius: 32px;
+      box-shadow: 0 4px 32px rgba(75,255,255,0.25), 0 2px 8px #111;
+      color: #fff;
+      text-align: center;
+      position: relative;
+    }
+    .skrim-title {
+      font-size: 2.1rem;
+      font-weight: bold;
+      margin-bottom: 1.2rem;
+      letter-spacing: 0.25rem;
+      text-shadow: 0 2px 6px #00eaff77;
+    }
+    .skrim-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .skrim-btn {
+      background: linear-gradient(90deg, #00eaff 0%, #0099ff 100%);
+      color: #1a222e;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 999px;
+      padding: 0.7em 2em;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 1px 6px #00eaff55;
+      margin-bottom: 8px;
+    }
+    .skrim-btn:hover {
+      background: linear-gradient(90deg, #0099ff 0%, #00eaff 100%);
+      color: #fff;
+    }
+    .skrim-slider {
+      width: 220px;
+      accent-color: #00eaff;
+      height: 6px;
+      border-radius: 6px;
+      background: #222;
+    }
+    .skrim-volume {
+      width: 120px;
+      accent-color: #ffb300;
+    }
+    .skrim-wave {
+      display: flex;
+      justify-content: center;
+      align-items: end;
+      height: 36px;
+      margin-top: 2rem;
+      gap: 6px;
+    }
+    .wave-bar {
+      display: inline-block;
+      width: 10px;
+      height: 30px;
+      background: linear-gradient(180deg, #00eaff, #0099ff);
+      border-radius: 4px;
+      animation: skrim-wave 1.2s infinite;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.6s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.8s; }
+    @keyframes skrim-wave {
+      0%, 100% { height: 16px; }
+      40% { height: 36px; }
+      80% { height: 24px; }
+    }
+    .credit {
+      margin-top: 1.2rem;
+      font-size: 0.95rem;
+      color: #b2eaff;
+      opacity: 0.7;
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+  <div class="skrim-player">
+    <audio id="audio" src="SKRIM.mp3" preload="auto"></audio>
+    <div class="skrim-title">🎵 SKRIM.mp3 🎵</div>
+    <div class="skrim-controls">
+      <button id="playPause" class="skrim-btn">▶️ Play</button>
+      <input id="seekBar" class="skrim-slider" type="range" min="0" max="100" value="0">
+      <input id="volumeBar" class="skrim-volume" type="range" min="0" max="1" step="0.01" value="0.7">
+    </div>
+    <div class="skrim-wave">
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+      <span class="wave-bar"></span>
+    </div>
+    <div class="credit">Made with 💙 for my uncle</div>
+  </div>
+  <script>
+    const audio = document.getElementById('audio');
+    const playPause = document.getElementById('playPause');
+    const seekBar = document.getElementById('seekBar');
+    const volumeBar = document.getElementById('volumeBar');
+    let playing = false;
+    audio.volume = 0.7;
+    playPause.onclick = () => {
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    };
+    audio.onplay = () => playPause.textContent = "⏸ Pause";
+    audio.onpause = () => playPause.textContent = "▶️ Play";
+    audio.ontimeupdate = () => {
+      seekBar.value = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+    };
+    seekBar.oninput = e => {
+      if (audio.duration) {
+        audio.currentTime = (seekBar.value / 100) * audio.duration;
+      }
+    };
+    volumeBar.oninput = e => {
+      audio.volume = volumeBar.value;
+    };
+    audio.onended = () => playPause.textContent = "▶️ Play";
+  </script>
+</body>
+</html>
