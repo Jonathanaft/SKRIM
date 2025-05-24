@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>CustomSKRIM.mp3</title>
-  <link href="https://fonts.googleapis.com/css?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
   <style>
     body {
       background: linear-gradient(135deg, #232526 0%, #414345 100%);
@@ -13,6 +13,7 @@
       align-items: center;
       justify-content: center;
       font-family: 'Orbitron', Arial, sans-serif;
+      margin: 0;
     }
     .skrim-player {
       background: linear-gradient(135deg, #232526 0%, #414345 100%);
@@ -25,7 +26,7 @@
       position: relative;
     }
     .skrim-title {
-      font-size: 2.1rem;
+      font-size: 1.5rem;
       font-weight: bold;
       margin-bottom: 1.2rem;
       letter-spacing: 0.25rem;
@@ -33,9 +34,8 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 90%;
-      margin-left: auto;
-      margin-right: auto;
+      max-width: 100%;
+      padding: 0 10px;
     }
     .skrim-controls {
       display: flex;
@@ -52,24 +52,32 @@
       border-radius: 999px;
       padding: 0.7em 2em;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: all 0.2s ease;
       box-shadow: 0 1px 6px #00eaff55;
       margin-bottom: 8px;
     }
     .skrim-btn:hover {
       background: linear-gradient(90deg, #0099ff 0%, #00eaff 100%);
       color: #fff;
+      transform: scale(1.05);
+    }
+    .skrim-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     .skrim-slider {
-      width: 220px;
+      width: 100%;
+      max-width: 220px;
       accent-color: #00eaff;
       height: 6px;
       border-radius: 6px;
       background: #222;
+      cursor: pointer;
     }
     .skrim-volume {
       width: 120px;
       accent-color: #ffb300;
+      cursor: pointer;
     }
     .skrim-wave {
       display: flex;
@@ -82,10 +90,10 @@
     .wave-bar {
       display: inline-block;
       width: 10px;
-      height: 30px;
+      height: 16px;
       background: linear-gradient(180deg, #00eaff, #0099ff);
       border-radius: 4px;
-      animation: skrim-wave 1.2s infinite;
+      animation: skrim-wave 1.2s infinite ease-in-out;
     }
     .wave-bar:nth-child(2) { animation-delay: 0.2s; }
     .wave-bar:nth-child(3) { animation-delay: 0.4s; }
@@ -100,6 +108,29 @@
       margin-bottom: 1.2rem;
       text-align: center;
     }
+    .custom-upload input[type="file"] {
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      position: absolute;
+      z-index: -1;
+    }
+    .custom-upload label {
+      display: inline-block;
+      padding: 0.7em 1.5em;
+      background: linear-gradient(90deg, #ffb300 0%, #ff6b00 100%);
+      color: #1a222e;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 6px #ffb30055;
+    }
+    .custom-upload label:hover {
+      background: linear-gradient(90deg, #ff6b00 0%, #ffb300 100%);
+      transform: scale(1.05);
+    }
     .credit {
       margin-top: 1.2rem;
       font-size: 0.95rem;
@@ -107,18 +138,32 @@
       opacity: 0.7;
       letter-spacing: 0.06em;
     }
+    .time-display {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 220px;
+      font-size: 0.8rem;
+      color: #b2eaff;
+      margin-top: -10px;
+    }
   </style>
 </head>
 <body>
   <div class="skrim-player">
     <div class="custom-upload">
       <input type="file" id="fileInput" accept="audio/*" />
+      <label for="fileInput">📁 Upload Track</label>
     </div>
     <audio id="audio" preload="auto"></audio>
-    <div id="trackTitle" class="skrim-title">🎵 Your Track 🎵</div>
+    <div id="trackTitle" class="skrim-title">🎵 No Track Loaded 🎵</div>
     <div class="skrim-controls">
       <button id="playPause" class="skrim-btn" disabled>▶️ Play</button>
       <input id="seekBar" class="skrim-slider" type="range" min="0" max="100" value="0">
+      <div class="time-display">
+        <span id="currentTime">0:00</span>
+        <span id="totalTime">0:00</span>
+      </div>
       <input id="volumeBar" class="skrim-volume" type="range" min="0" max="1" step="0.01" value="0.7">
     </div>
     <div class="skrim-wave">
@@ -137,44 +182,70 @@
     const volumeBar = document.getElementById('volumeBar');
     const fileInput = document.getElementById('fileInput');
     const trackTitle = document.getElementById('trackTitle');
-    let loaded = false;
+    const currentTimeDisplay = document.getElementById('currentTime');
+    const totalTimeDisplay = document.getElementById('totalTime');
+    
     audio.volume = 0.7;
 
-    fileInput.onchange = e => {
+    fileInput.addEventListener('change', function(e) {
       const file = fileInput.files[0];
       if (file) {
         const url = URL.createObjectURL(file);
         audio.src = url;
-        trackTitle.textContent = "🎵 " + file.name + " 🎵";
+        trackTitle.textContent = "🎵 " + file.name.replace(/\.[^/.]+$/, "") + " 🎵";
         playPause.disabled = false;
-        audio.load();
+        
+        audio.addEventListener('loadedmetadata', function() {
+          totalTimeDisplay.textContent = formatTime(audio.duration);
+        });
+        
         playPause.textContent = "▶️ Play";
         seekBar.value = 0;
       }
-    };
+    });
 
-    playPause.onclick = () => {
+    playPause.addEventListener('click', function() {
       if (!audio.src) return;
       if (audio.paused) {
         audio.play();
       } else {
         audio.pause();
       }
-    };
-    audio.onplay = () => playPause.textContent = "⏸ Pause";
-    audio.onpause = () => playPause.textContent = "▶️ Play";
-    audio.ontimeupdate = () => {
+    });
+    
+    audio.addEventListener('play', function() {
+      playPause.textContent = "⏸ Pause";
+    });
+    
+    audio.addEventListener('pause', function() {
+      playPause.textContent = "▶️ Play";
+    });
+    
+    audio.addEventListener('timeupdate', function() {
       seekBar.value = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-    };
-    seekBar.oninput = e => {
+      currentTimeDisplay.textContent = formatTime(audio.currentTime);
+    });
+    
+    seekBar.addEventListener('input', function() {
       if (audio.duration) {
         audio.currentTime = (seekBar.value / 100) * audio.duration;
       }
-    };
-    volumeBar.oninput = e => {
+    });
+    
+    volumeBar.addEventListener('input', function() {
       audio.volume = volumeBar.value;
-    };
-    audio.onended = () => playPause.textContent = "▶️ Play";
+    });
+    
+    audio.addEventListener('ended', function() {
+      playPause.textContent = "▶️ Play";
+      audio.currentTime = 0;
+    });
+    
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
   </script>
 </body>
 </html>
